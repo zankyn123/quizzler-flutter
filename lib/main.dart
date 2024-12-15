@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'QuestionBrain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +27,9 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> listScored = [];
+  QuestionBrain questionBrain = QuestionBrain();
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +42,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                questionBrain.getCurrentQuestion(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -48,6 +53,7 @@ class _QuizPageState extends State<QuizPage> {
           ),
         ),
         Expanded(
+          flex: 1,
           child: Padding(
             padding: EdgeInsets.all(15.0),
             child: TextButton(
@@ -67,12 +73,13 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked true.
+                handleAnswer(true);
               },
             ),
           ),
         ),
         Expanded(
+          flex: 1,
           child: Padding(
             padding: EdgeInsets.all(15.0),
             child: TextButton(
@@ -81,7 +88,7 @@ class _QuizPageState extends State<QuizPage> {
                   TextStyle(color: Colors.white),
                 ),
                 backgroundColor: WidgetStateProperty.all(
-                  Colors.green,
+                  Colors.red,
                 ),
               ),
               child: Text(
@@ -92,14 +99,52 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked true.
+                handleAnswer(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Wrap(
+          children: listScored,
+        ),
       ],
     );
+  }
+
+  void handleAnswer(bool userAnswer) {
+    setState(() {
+      if (!(questionBrain.listQuestions().length == listScored.length)) {
+        Icon score = questionBrain.isCorrectAnswer(userAnswer)
+            ? Icon(Icons.check, color: Colors.green)
+            : Icon(Icons.close, color: Colors.red);
+        listScored.add(score);
+      }
+      if (questionBrain.isLastQuestion()) {
+        showAlert();
+      } else {
+        questionBrain.nextQuestion();
+      }
+    });
+  }
+
+  Future<void> showAlert() async {
+    await Alert(
+      context: super.context,
+      title: "THÔNG BÁO",
+      desc: 'Bạn dã hoàn thiện hết số lượng câu hỏi. Chúc mừng bạn !!',
+      buttons: [
+        DialogButton(
+          child: Text('OK'),
+          onPressed: () {
+            setState(() {
+              questionBrain.resetQuestions();
+              listScored = [];
+              Navigator.of(context).pop();
+            });
+          },
+        )
+      ],
+    ).show();
   }
 }
 
